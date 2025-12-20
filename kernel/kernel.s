@@ -3,7 +3,7 @@
 
 _start:
     cli
-    movw $0x8000, %ax
+    movw %cs, %ax
     movw %ax, %ds
     movw %ax, %es
     sti
