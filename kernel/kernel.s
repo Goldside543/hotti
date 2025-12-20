@@ -2,18 +2,18 @@
 .global _start
 
 # ----------------------------
-# Constants (floppy FAT12)
+# FAT12 constants (1.44MB)
 # ----------------------------
-FAT_START      = 1
-FAT_SECTORS    = 9
-ROOT_START     = FAT_START + FAT_SECTORS*2
-ROOT_SECTORS   = 14
-DATA_START     = ROOT_START + ROOT_SECTORS
+.set FAT_START,    1
+.set FAT_SECTORS,  9
+.set ROOT_START,   FAT_START + FAT_SECTORS*2
+.set ROOT_SECTORS, 14
+.set DATA_START,   ROOT_START + ROOT_SECTORS
 
-# Memory layout
-FAT_BUF        = 0xA000
-ROOT_BUF       = 0xB000
-PROG_SEG       = 0xC000
+# Memory layout (segment 0)
+.set FAT_BUF,   0xA000
+.set ROOT_BUF,  0xB000
+.set PROG_SEG,  0xC000
 
 # ----------------------------
 # Kernel entry
@@ -25,7 +25,6 @@ _start:
     movw %ax, %es
     sti
 
-    # Print banner
     movw $message, %si
 .print:
     lodsb
@@ -36,15 +35,11 @@ _start:
     jmp .print
 
 .after_print:
-    # Load FAT + root directory
     call load_fat
     call load_root
-
-    # Find file
     call find_file
     jc halt
 
-    # AX = starting cluster
     call load_com
     call run_com
 
@@ -54,35 +49,38 @@ halt:
     jmp halt
 
 # ----------------------------
-# BIOS disk read (LBA -> CHS)
-# IN: AX = LBA, CX = count, ES:BX = buffer
+# BIOS disk read
+# IN:
+#   AX = LBA
+#   CX = sector count
+#   ES:BX = buffer
 # ----------------------------
 disk_read:
     pusha
 .next:
-    pushw ax
+    pushw %ax
 
-    xorw dx, dx
-    movw cx, 18
-    divw cx
-    incw dx
-    movb cl, dl
+    xorw %dx, %dx
+    movw $18, %cx
+    divw %cx
+    incb %dl
+    movb %dl, %cl
 
-    xorw dx, dx
-    movw cx, 2
-    divw cx
+    xorw %dx, %dx
+    movw $2, %cx
+    divw %cx
 
-    movb dh, dl
-    movb ch, al
+    movb %dl, %dh
+    movb %al, %ch
 
-    movb ah, 0x02
-    movb al, 1
-    int 0x13
+    movb $0x02, %ah
+    movb $1, %al
+    int $0x13
     jc disk_fail
 
-    popw ax
-    incw ax
-    addw bx, 512
+    popw %ax
+    incw %ax
+    addw $512, %bx
     loop .next
 
     popa
@@ -93,13 +91,13 @@ disk_fail:
     hlt
 
 # ----------------------------
-# Load FAT
+# Load FAT tables
 # ----------------------------
 load_fat:
-    movw ax, FAT_START
-    movw cx, FAT_SECTORS*2
-    movw bx, FAT_BUF
-    movw es, 0
+    movw $FAT_START, %ax
+    movw $(FAT_SECTORS*2), %cx
+    movw $FAT_BUF, %bx
+    movw $0x0000, %es
     call disk_read
     ret
 
@@ -107,56 +105,63 @@ load_fat:
 # Load root directory
 # ----------------------------
 load_root:
-    movw ax, ROOT_START
-    movw cx, ROOT_SECTORS
-    movw bx, ROOT_BUF
-    movw es, 0
+    movw $ROOT_START, %ax
+    movw $ROOT_SECTORS, %cx
+    movw $ROOT_BUF, %bx
+    movw $0x0000, %es
     call disk_read
     ret
 
 # ----------------------------
-# FAT12 cluster follow
-# IN: AX = cluster
+# FAT12 next cluster
+# IN:  AX = cluster
 # OUT: AX = next cluster
 # ----------------------------
 fat_next:
-    movw bx, ax
-    addw bx, ax
-    shrw bx, 1
-    movw si, FAT_BUF
-    addw si, bx
-    movw ax, [si]
-    testb bl, 1
+    movw %ax, %bx
+    addw %ax, %bx
+    shrw $1, %bx
+
+    movw $FAT_BUF, %si
+    addw %bx, %si
+    movw (%si), %ax
+
+    testb $1, %bl
     jz .even
-    shrw ax, 4
+    shrw $4, %ax
     ret
+
 .even:
-    andw ax, 0x0FFF
+    andw $0x0FFF, %ax
     ret
 
 # ----------------------------
-# Find .COM in root dir
+# Find HELLO.COM
 # OUT: AX = start cluster
 # ----------------------------
 find_file:
-    movw si, ROOT_BUF
-    movw cx, 224
+    movw $ROOT_BUF, %si
+    movw $224, %cx
 .next:
-    cmpb byte ptr [si], 0
+    cmpb $0, (%si)
     je .fail
-    pushw si
-    movw di, filename
-    movw bx, 11
+
+    pushw %si
+    movw $filename, %di
+    movw $11, %bx
     repe cmpsb
-    popw si
+    popw %si
     je .found
-    addw si, 32
+
+    addw $32, %si
     loop .next
+
 .fail:
     stc
     ret
+
 .found:
-    movw ax, [si+26]
+    movw 26(%si), %ax
     clc
     ret
 
@@ -165,19 +170,23 @@ find_file:
 # IN: AX = start cluster
 # ----------------------------
 load_com:
-    movw bx, 0x0100
-    movw es, PROG_SEG
+    movw $0x0100, %bx
+    movw $PROG_SEG, %es
+
 .next_cluster:
-    cmpw ax, 0xFF8
+    cmpw $0x0FF8, %ax
     jae .done
-    pushw ax
-    subw ax, 2
-    addw ax, DATA_START
-    movw cx, 1
+
+    pushw %ax
+    subw $2, %ax
+    addw $DATA_START, %ax
+    movw $1, %cx
     call disk_read
-    popw ax
+    popw %ax
+
     call fat_next
     jmp .next_cluster
+
 .done:
     ret
 
@@ -186,19 +195,19 @@ load_com:
 # ----------------------------
 run_com:
     cli
-    movw ax, PROG_SEG
-    movw ds, ax
-    movw es, ax
-    movw ss, ax
-    movw sp, 0xFFFE
+    movw $PROG_SEG, %ax
+    movw %ax, %ds
+    movw %ax, %es
+    movw %ax, %ss
+    movw $0xFFFE, %sp
     sti
-    jmp PROG_SEG:0x0100
+    ljmp $PROG_SEG, $0x0100
 
 # ----------------------------
 # Data
 # ----------------------------
 message:
-    .asciz "Microspace booted. Loading program...\r\n"
+    .asciz "Microspace booted. Loading HELLO.COM...\r\n"
 
 filename:
     .ascii "HELLO   COM"
