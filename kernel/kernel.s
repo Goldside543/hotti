@@ -38,7 +38,7 @@ _start:
     call load_fat
     call load_root
     call find_file
-    jc halt
+    jnc .found
 
     call load_com
     call run_com
