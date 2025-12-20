@@ -26,8 +26,7 @@ $(KERNEL_BIN): $(KERNEL_SRC)
 # OS image
 $(OS_IMG): $(BOOT_BIN) $(KERNEL_BIN)
 	dd if=/dev/zero of=$(OS_IMG) bs=512 count=2880
-	mkfs.fat -F 12 $(OS_IMG)
-	dd if=$(BOOT_BIN) of=$(OS_IMG) conv=notrunc
+	mformat -i $(OS_IMG) -B $(BOOT_BIN) ::
 	dd if=$(KERNEL_BIN) of=$(OS_IMG) bs=512 seek=1 conv=notrunc
 
 # Clean
