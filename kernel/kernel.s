@@ -57,31 +57,28 @@ halt:
 # ----------------------------
 disk_read:
     pusha
-.next:
-    pushw %ax
 
-    xorw %dx, %dx
-    movw $18, %cx
-    divw %cx
-    incb %dl
-    movb %dl, %cl
+    # DS:SI = pointer to Disk Address Packet
+    # We'll build it on the stack for simplicity
+    subw $16, %sp             # allocate 16 bytes for DAP
+    movw %sp, %si             # SI points to DAP
 
-    xorw %dx, %dx
-    movw $2, %cx
-    divw %cx
+    # Fill in DAP
+    movb $0x10, 0(%si)        # size of DAP = 16 bytes
+    movb $0x00, 1(%si)        # reserved
+    movw $1, 2(%si)           # number of sectors to read (adjust as needed)
+    movw %bx, 4(%si)          # buffer offset (BX)
+    movw %es, 6(%si)          # buffer segment (ES)
+    movl %ax, 8(%si)          # low 32 bits of LBA
+    movl $0, 12(%si)           # high 32 bits of LBA (we're only using 32-bit LBA)
 
-    movb %dl, %dh
-    movb %al, %ch
-
-    movb $0x02, %ah
-    movb $1, %al
+    movb $0x42, %ah           # Extended Read
     int $0x13
     jc disk_fail
 
-    popw %ax
-    incw %ax
-    addw $512, %bx
-    loop .next
+    addw $512, %bx            # move buffer pointer
+    addl $1, %ax              # increment LBA
+    addw $16, %sp             # free DAP
 
     popa
     ret
