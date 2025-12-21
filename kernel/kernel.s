@@ -79,7 +79,7 @@ disk_read:
     jc disk_fail
 
     addw $512, %bx            # move buffer pointer
-    addl $1, %ax              # increment LBA
+    addw $1, %ax              # increment LBA
     addw $16, %sp             # free DAP
 
     popa
