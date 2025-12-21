@@ -145,6 +145,9 @@ fat_next:
 find_file:
     movw $ROOT_BUF, %si
     movw $224, %cx
+    movw $ds, %ax
+    movw %ax, %es          # ES must point to DS for 'filename'
+
 .next_file:
     cmpb $0, (%si)
     je .fail
