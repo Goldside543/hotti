@@ -69,8 +69,10 @@ disk_read:
     movw $1, 2(%si)           # number of sectors to read (adjust as needed)
     movw %bx, 4(%si)          # buffer offset (BX)
     movw %es, 6(%si)          # buffer segment (ES)
-    movl %ax, 8(%si)          # low 32 bits of LBA
-    movl $0, 12(%si)           # high 32 bits of LBA (we're only using 32-bit LBA)
+    movw %ax, 8(%si)          # low 16 bits
+    movw $0, 10(%si)          # high 16 bits (since LBA < 65536 for floppies)
+    movw $0, 12(%si)          # upper 16 bits of 32-bit field (or zero)
+    movw $0, 14(%si)          # upper 16 bits of 32-bit field (or zero)
 
     movb $0x42, %ah           # Extended Read
     int $0x13
