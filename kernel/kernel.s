@@ -78,7 +78,7 @@ find_file:
 
 .next:
     cmpb $0, (%si)
-    je .fail
+    je .fail_find
 
     pushw %si
     movw %si, %di
@@ -91,7 +91,7 @@ find_file:
     addw $16, %si
     loop .next
 
-.fail:
+.fail_find:
     popw %ds
     stc
     ret
@@ -113,7 +113,7 @@ load_com:
 
 .next_sector:
     call disk_read_chs
-    jc .fail
+    jc .fail_load
 
     addw $512, %bx
     incb %cl
@@ -129,7 +129,7 @@ load_com:
     loop .next_sector
     ret
 
-.fail:
+.fail_load:
     stc
     ret
 
