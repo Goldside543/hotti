@@ -18,10 +18,10 @@ _start:
     int $0x10
     jmp .print
 
-.after_print
+.after_print:
     movw $message2, %si
     
-.print2
+.print2:
     lodsb
     testb %al, %al
     jz .after_print2
@@ -29,7 +29,7 @@ _start:
     int $0x10
     jmp .print2
 
-.after_print2
+.after_print2:
     movb $0x00, %ah
     int $0x16
     movw $0x1000, %ax
