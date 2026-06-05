@@ -5,8 +5,8 @@ LD = x86_64-linux-gnu-ld -m elf_i386
 BOOT_SRC = bootloader/boot.s
 BOOT_BIN = bootloader/boot.bin
 
-KERNEL_SRC = kernel/kernel.s
-KERNEL_BIN = kernel/kernel.bin
+KERNEL_SRC = kernel/hottistart.s
+KERNEL_BIN = kernel/hotti.bin
 
 OS_IMG = os.img
 
@@ -20,8 +20,8 @@ $(BOOT_BIN): $(BOOT_SRC)
 
 # Kernel
 $(KERNEL_BIN): $(KERNEL_SRC)
-	$(AS) $(KERNEL_SRC) -o kernel/kernel.o
-	$(LD) -Ttext 0x8000 --oformat binary kernel/kernel.o -o $(KERNEL_BIN)
+	$(AS) $(KERNEL_SRC) -o kernel/hottistart.o
+	$(LD) -Ttext 0x8000 --oformat binary kernel/hottistart.o -o $(KERNEL_BIN)
 
 # OS image
 $(OS_IMG): $(BOOT_BIN) $(KERNEL_BIN)
