@@ -1,5 +1,7 @@
 AS = x86_64-linux-gnu-as --32
 LD = x86_64-linux-gnu-ld -m elf_i386
+CC = bcc
+CFLAGS = -ansi -Ms -d -x
 
 # Files
 BOOT_SRC = bootloader/boot.s
@@ -9,6 +11,9 @@ KERNEL_SRC = kernel/hottistart.s
 KERNEL_BIN = kernel/hotti.bin
 
 OS_IMG = os.img
+
+HLIBC_SRC = hlibc.c
+HLIBC_OBJ = hlibc.o
 
 # Targets
 all: $(OS_IMG)
@@ -29,10 +34,15 @@ $(OS_IMG): $(BOOT_BIN) $(KERNEL_BIN)
 	dd if=$(BOOT_BIN) of=$(OS_IMG) bs=512 count=1 conv=notrunc
 	dd if=$(KERNEL_BIN) of=$(OS_IMG) bs=512 seek=1 conv=notrunc
 
+# hlibc
+$(HLIBC_OBJ): $(HLIBC_SRC)
+    $(CC) $(CFLAGS) $(HLIBC_SRC) -c $(HLIBC_OBJ)
+
 # Clean
 clean:
 	rm -f bootloader/*.o bootloader/*.elf bootloader/*.bin \
 	       kernel/*.o kernel/*.elf kernel/*.bin \
+           hlibc/*.o  hlibc/*.elf  hlibc/*.bin  \
 	       $(OS_IMG)
 
 .PHONY: all clean
