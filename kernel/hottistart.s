@@ -42,6 +42,7 @@ _start:
     jc .read_failed
     movw $0x1000, %ax
     movw %ax, %ds
+    movw %ax, %ss
     ljmp $0x1000, $0x0000
 
 .read_failed:
