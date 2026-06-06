@@ -20,29 +20,29 @@ all: $(OS_IMG) $(HLIBC_OBJ)
 
 # Bootloader
 $(BOOT_BIN): $(BOOT_SRC)
-        $(AS) $(BOOT_SRC) -o bootloader/boot.o
-        $(LD) -Ttext 0x7C00 --oformat binary bootloader/boot.o -o bootloader/boot.bin
+	$(AS) $(BOOT_SRC) -o bootloader/boot.o
+	$(LD) -Ttext 0x7C00 --oformat binary bootloader/boot.o -o bootloader/boot.bin
 
 # Kernel
 $(KERNEL_BIN): $(KERNEL_SRC)
-        $(AS) $(KERNEL_SRC) -o kernel/hottistart.o
-        $(LD) -Ttext 0x8000 --oformat binary kernel/hottistart.o -o $(KERNEL_BIN)
+	$(AS) $(KERNEL_SRC) -o kernel/hottistart.o
+	$(LD) -Ttext 0x8000 --oformat binary kernel/hottistart.o -o $(KERNEL_BIN)
 
 # OS image
 $(OS_IMG): $(BOOT_BIN) $(KERNEL_BIN)
-        dd if=/dev/zero of=$(OS_IMG) bs=512 count=2880
-        dd if=$(BOOT_BIN) of=$(OS_IMG) bs=512 count=1 conv=notrunc
-        dd if=$(KERNEL_BIN) of=$(OS_IMG) bs=512 seek=1 conv=notrunc
+	dd if=/dev/zero of=$(OS_IMG) bs=512 count=2880
+	dd if=$(BOOT_BIN) of=$(OS_IMG) bs=512 count=1 conv=notrunc
+	dd if=$(KERNEL_BIN) of=$(OS_IMG) bs=512 seek=1 conv=notrunc
 
 # hlibc
 $(HLIBC_OBJ): $(HLIBC_SRC)
-        $(CC) $(CFLAGS) $(HLIBC_SRC) -c $(HLIBC_OBJ)
+	$(CC) $(CFLAGS) $(HLIBC_SRC) -c $(HLIBC_OBJ)
 
 # Clean
 clean:
-        rm -f bootloader/*.o bootloader/*.elf bootloader/*.bin \
-               kernel/*.o kernel/*.elf kernel/*.bin \
-           hlibc/*.o  hlibc/*.elf  hlibc/*.bin  \
-               $(OS_IMG)
+	rm -f bootloader/*.o bootloader/*.elf bootloader/*.bin \
+		kernel/*.o kernel/*.elf kernel/*.bin \
+		hlibc/*.o  hlibc/*.elf  hlibc/*.bin  \
+		$(OS_IMG)
 
 .PHONY: all clean
