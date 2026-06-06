@@ -40,6 +40,8 @@ _start:
     movb $0x00, %dh
     call disk_read_chs
     jc .read_failed
+    movw $0x1000, %ax
+    movw %ax, %ds
     ljmp $0x1000, $0x0000
 
 .read_failed:
