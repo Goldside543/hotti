@@ -12,6 +12,7 @@ int main() {
     putc(' ');
     putc('C');
     putc('!');
+    putc('\r');
     putc('\n');
 
     #asm
